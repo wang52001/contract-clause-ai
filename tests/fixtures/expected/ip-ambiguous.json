@@ -1,0 +1,16 @@
+{
+  "name": "IP 模糊但其他条款良好",
+  "description": "付款/责任/终止/范围/竞业/保密/kill fee 均合规，唯 IP 条款未约定付款前权属且背景 IP 一并转让且无署名权",
+  "expectedClauses": [
+    { "type": "payment", "severityIn": ["low"] },
+    { "type": "ip", "severityIn": ["medium", "high"] },
+    { "type": "liability", "severityIn": ["low"] },
+    { "type": "termination", "severityIn": ["low"] },
+    { "type": "scope", "severityIn": ["low"] },
+    { "type": "non_compete", "severityIn": ["low"] },
+    { "type": "nda", "severityIn": ["low"] },
+    { "type": "kill_fee", "severityIn": ["low"] }
+  ],
+  "expectedMissingAnyOf": [],
+  "expectedRiskLevelIn": ["low", "medium"]
+}

@@ -1,0 +1,15 @@
+{
+  "name": "付款条款重度风险合同",
+  "description": "Net-90 + pay-when-paid + 主观验收 + 无违约金；IP 全归甲方且含背景资料；无限连带责任；单方随时终止；3 年无补偿竞业；单向永久保密；无 kill fee",
+  "expectedClauses": [
+    { "type": "payment", "severityIn": ["high"] },
+    { "type": "ip", "severityIn": ["high"] },
+    { "type": "liability", "severityIn": ["high"] },
+    { "type": "termination", "severityIn": ["high"] },
+    { "type": "scope", "severityIn": ["high", "medium"] },
+    { "type": "non_compete", "severityIn": ["high"] },
+    { "type": "nda", "severityIn": ["high", "medium"] }
+  ],
+  "expectedMissingAnyOf": ["kill_fee"],
+  "expectedRiskLevelIn": ["high"]
+}

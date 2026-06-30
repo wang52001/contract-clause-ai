@@ -1,0 +1,15 @@
+{
+  "name": "仅缺 kill fee 的良好合同",
+  "description": "付款/IP/责任/终止/范围/竞业/保密均合规，仅未约定项目取消补偿（kill fee）",
+  "expectedClauses": [
+    { "type": "payment", "severityIn": ["low"] },
+    { "type": "ip", "severityIn": ["low"] },
+    { "type": "liability", "severityIn": ["low"] },
+    { "type": "termination", "severityIn": ["low"] },
+    { "type": "scope", "severityIn": ["low"] },
+    { "type": "non_compete", "severityIn": ["low"] },
+    { "type": "nda", "severityIn": ["low"] }
+  ],
+  "expectedMissingAnyOf": ["kill_fee"],
+  "expectedRiskLevelIn": ["low"]
+}

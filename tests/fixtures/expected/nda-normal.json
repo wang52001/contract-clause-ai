@@ -1,0 +1,9 @@
+{
+  "name": "标准保密协议",
+  "description": "双向 NDA、2 年期限、含例外，仅约束保密与少量责任，缺少付款/IP/竞业/kill fee 等关键条款",
+  "expectedClauses": [
+    { "type": "nda", "severityIn": ["low", "medium"] }
+  ],
+  "expectedMissingAnyOf": ["payment", "ip", "scope", "non_compete", "kill_fee"],
+  "expectedRiskLevelIn": ["medium", "high"]
+}

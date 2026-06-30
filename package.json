@@ -1,0 +1,42 @@
+{
+  "name": "freelancer-contract-guard",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "test": "node tests/regression.mjs"
+  },
+  "dependencies": {
+    "@radix-ui/react-slot": "1.1.1",
+    "@serwist/next": "9.0.11",
+    "class-variance-authority": "0.7.1",
+    "clsx": "2.1.1",
+    "jspdf": "2.5.2",
+    "lucide-react": "0.469.0",
+    "lz-string": "^1.5.0",
+    "mammoth": "1.8.0",
+    "next": "^15.5.19",
+    "pdfjs-dist": "4.10.38",
+    "react": "19.0.0",
+    "react-dom": "19.0.0",
+    "serwist": "9.0.11",
+    "sharp": "^0.35.2",
+    "tailwind-merge": "2.6.0",
+    "zod": "3.24.1",
+    "zustand": "5.0.3"
+  },
+  "devDependencies": {
+    "@types/node": "22.10.7",
+    "@types/react": "19.0.7",
+    "@types/react-dom": "19.0.3",
+    "@types/sharp": "^0.31.1",
+    "autoprefixer": "10.4.20",
+    "docx": "^9.7.1",
+    "postcss": "8.5.1",
+    "tailwindcss": "3.4.17",
+    "typescript": "5.7.3"
+  }
+}

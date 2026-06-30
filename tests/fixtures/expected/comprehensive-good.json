@@ -1,0 +1,16 @@
+{
+  "name": "全面合规的良好合同",
+  "description": "8 类条款全部覆盖且均合规：里程碑付款 + Net-15 + 违约金；IP 付清后转移 + 保留背景 + 署名；责任上限 + 排除间接；对等终止 + 通知期；3 轮修改 + 变更订单；6 月竞业 + 补偿；双向保密 + 例外；分级 kill fee",
+  "expectedClauses": [
+    { "type": "payment", "severityIn": ["low"] },
+    { "type": "ip", "severityIn": ["low"] },
+    { "type": "liability", "severityIn": ["low"] },
+    { "type": "termination", "severityIn": ["low"] },
+    { "type": "scope", "severityIn": ["low"] },
+    { "type": "non_compete", "severityIn": ["low"] },
+    { "type": "nda", "severityIn": ["low"] },
+    { "type": "kill_fee", "severityIn": ["low"] }
+  ],
+  "expectedMissingAnyOf": [],
+  "expectedRiskLevelIn": ["low"]
+}

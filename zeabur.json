@@ -1,0 +1,31 @@
+{
+  "$schema": "https://schema.zeabur.app/template.json",
+  "build": {
+    "type": "docker"
+  },
+  "start": {
+    "cmd": "node server.js"
+  },
+  "envs": [
+    {
+      "key": "DEEPSEEK_API_KEY",
+      "required": true,
+      "description": "DeepSeek API Key，调用 deepseek-chat 必需"
+    },
+    {
+      "key": "ZPAY_PID",
+      "required": false,
+      "description": "ZPAY 商户号，配置后启用在线支付（不配置则仅邀请码激活）"
+    },
+    {
+      "key": "ZPAY_KEY",
+      "required": false,
+      "description": "ZPAY 商户密钥，用于签名与验签"
+    },
+    {
+      "key": "ZPAY_API_URL",
+      "required": false,
+      "description": "ZPAY 下单接口地址，默认 https://api.z-pay.uk/api/pay/create"
+    }
+  ]
+}
