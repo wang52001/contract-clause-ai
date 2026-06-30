@@ -42,7 +42,7 @@ export const MissingProtectionSchema = z.object({
 
 export const OverallSchema = z.object({
   summary: z.string().describe("一句话总评"),
-  top_risks: z.array(z.string()).max(3).describe("最严重的前 3 个风险"),
+  top_risks: z.array(z.string()).describe("最严重的几个风险"),
 });
 
 export const AnalysisResultSchema = z.object({
