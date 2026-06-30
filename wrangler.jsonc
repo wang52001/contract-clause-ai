@@ -1,0 +1,6 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "contract-clause-ai",
+  "compatibility_date": "2026-06-30",
+  "compatibility_flags": ["nodejs_compat"]
+}
