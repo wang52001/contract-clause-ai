@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { analyzeContract } from "@/lib/ai/parse";
 import { assessRisk } from "@/lib/scoring/risk";
 
-export const runtime = "nodejs";
+export const runtime = "edge";
 export const dynamic = "force-dynamic";
 
 const MIN_LENGTH = 80;

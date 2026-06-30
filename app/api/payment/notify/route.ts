@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { verifyNotify } from "@/lib/payment/zpay";
 import { getOrder, markPaid, cleanup } from "@/lib/payment/orders";
 
-export const runtime = "nodejs";
+export const runtime = "edge";
 export const dynamic = "force-dynamic";
 
 export async function GET(req: NextRequest) {
@@ -33,7 +33,7 @@ async function handle(req: NextRequest) {
     });
   }
 
-  if (!verifyNotify(params)) {
+  if (!(await verifyNotify(params))) {
     return new NextResponse("fail", { status: 400 });
   }
 

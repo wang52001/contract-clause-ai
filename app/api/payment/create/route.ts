@@ -7,7 +7,7 @@ import {
 } from "@/lib/payment/zpay";
 import { createOrder } from "@/lib/payment/orders";
 
-export const runtime = "nodejs";
+export const runtime = "edge";
 export const dynamic = "force-dynamic";
 
 const PRICE = "9.90";
@@ -31,7 +31,7 @@ export async function POST(req: NextRequest) {
 
   createOrder({ outTradeNo, money: PRICE, type });
 
-  const { url } = buildCreateOrderUrl({
+  const { url } = await buildCreateOrderUrl({
     outTradeNo,
     name: "接单护身符 · 单份报告会员",
     money: PRICE,

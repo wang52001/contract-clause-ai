@@ -1,5 +1,3 @@
-import { createHash, randomBytes } from "crypto";
-
 export const ZPAY_PID = process.env.ZPAY_PID ?? "";
 export const ZPAY_KEY = process.env.ZPAY_KEY ?? "";
 export const ZPAY_API = process.env.ZPAY_API_URL ?? "https://api.z-pay.uk/api/pay/create";
@@ -25,32 +23,48 @@ export function isConfigured(): boolean {
   return Boolean(ZPAY_PID && ZPAY_KEY);
 }
 
+function bytesToHex(bytes: Uint8Array): string {
+  return Array.from(bytes)
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("");
+}
+
+function randomHex(length: number): string {
+  const bytes = new Uint8Array(length);
+  crypto.getRandomValues(bytes);
+  return bytesToHex(bytes);
+}
+
+async function md5(input: string): Promise<string> {
+  const data = new TextEncoder().encode(input);
+  const buffer = await crypto.subtle.digest("MD5", data);
+  return bytesToHex(new Uint8Array(buffer));
+}
+
 export function generateOutTradeNo(): string {
   const ts = Date.now().toString(36).toUpperCase();
-  const rand = randomBytes(4).toString("hex").toUpperCase();
+  const rand = randomHex(4).toUpperCase();
   return `FCG${ts}${rand}`;
 }
 
-export function sign(params: Record<string, string>): string {
+export async function sign(params: Record<string, string>): Promise<string> {
   const sorted = Object.keys(params)
     .filter((k) => params[k] !== "" && k !== "sign" && k !== "sign_type")
     .sort()
     .map((k) => `${k}=${params[k]}`)
     .join("&");
-  return createHash("md5")
-    .update(sorted + ZPAY_KEY, "utf8")
-    .digest("hex");
+  return md5(sorted + ZPAY_KEY);
 }
 
-export function verifyNotify(params: Record<string, string>): boolean {
+export async function verifyNotify(params: Record<string, string>): Promise<boolean> {
   if (!isConfigured()) return false;
   const incoming = params.sign;
   if (!incoming) return false;
-  const expected = sign(params);
+  const expected = await sign(params);
   return incoming.toLowerCase() === expected.toLowerCase();
 }
 
-export function buildCreateOrderUrl(params: CreateOrderParams): CreateOrderResult {
+export async function buildCreateOrderUrl(params: CreateOrderParams): Promise<CreateOrderResult> {
   const payload: Record<string, string> = {
     pid: ZPAY_PID,
     type: params.type,
@@ -63,7 +77,7 @@ export function buildCreateOrderUrl(params: CreateOrderParams): CreateOrderResul
     sign: "",
     sign_type: "MD5",
   };
-  payload.sign = sign(payload);
+  payload.sign = await sign(payload);
   const query = new URLSearchParams(payload).toString();
   return { url: `${ZPAY_API}?${query}`, params: payload, sign: payload.sign };
 }
