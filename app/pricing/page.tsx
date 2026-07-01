@@ -95,21 +95,21 @@ export default function PricingPage() {
 
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1 text-center">
-                  <div className="relative aspect-square overflow-hidden rounded-md border bg-transparent">
+                  <div className="relative aspect-square overflow-hidden rounded-md bg-transparent">
                     <img
                       src="/wechat-pay.png"
                       alt="微信收款码"
-                      className="h-full w-full object-contain p-2"
+                      className="h-full w-full object-contain"
                     />
                   </div>
                   <p className="text-xs text-muted-foreground">微信支付</p>
                 </div>
                 <div className="space-y-1 text-center">
-                  <div className="relative aspect-square overflow-hidden rounded-md border bg-transparent">
+                  <div className="relative aspect-square overflow-hidden rounded-md bg-transparent">
                     <img
                       src="/alipay-pay.png"
                       alt="支付宝收款码"
-                      className="h-full w-full object-contain p-2"
+                      className="h-full w-full object-contain"
                     />
                   </div>
                   <p className="text-xs text-muted-foreground">支付宝</p>
