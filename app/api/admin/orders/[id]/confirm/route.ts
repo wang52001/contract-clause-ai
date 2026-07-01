@@ -1,0 +1,78 @@
+import { NextRequest, NextResponse } from "next/server";
+import { getDb, getEnv } from "@/lib/db/d1";
+
+export const runtime = "edge";
+export const dynamic = "force-dynamic";
+
+function getAdminSecret(req: NextRequest): string | null {
+  const auth = req.headers.get("authorization");
+  if (!auth || !auth.startsWith("Bearer ")) return null;
+  return auth.slice(7);
+}
+
+export async function POST(
+  req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const secret = getAdminSecret(req);
+    if (!secret || secret !== getEnv().ADMIN_SECRET) {
+      return NextResponse.json({ error: "无权限" }, { status: 403 });
+    }
+
+    const { id } = await params;
+    const orderId = parseInt(id, 10);
+    if (Number.isNaN(orderId)) {
+      return NextResponse.json({ error: "订单 ID 无效" }, { status: 400 });
+    }
+
+    const db = getDb();
+    const now = Date.now();
+
+    const order = await db
+      .prepare("SELECT user_id, status FROM orders WHERE id = ?")
+      .bind(orderId)
+      .first<{ user_id: number; status: string }>();
+
+    if (!order) {
+      return NextResponse.json({ error: "订单不存在" }, { status: 404 });
+    }
+
+    if (order.status !== "pending") {
+      return NextResponse.json({ error: "订单状态不是待付款" }, { status: 400 });
+    }
+
+    await db
+      .prepare(
+        "UPDATE orders SET status = 'paid', paid_at = ?, updated_at = ?, confirmed_by = 'admin' WHERE id = ?"
+      )
+      .bind(now, now, orderId)
+      .run();
+
+    const existing = await db
+      .prepare("SELECT id FROM memberships WHERE user_id = ?")
+      .bind(order.user_id)
+      .first<{ id: number }>();
+
+    if (existing) {
+      await db
+        .prepare(
+          "UPDATE memberships SET active = 1, starts_at = ?, order_id = ?, updated_at = ? WHERE id = ?"
+        )
+        .bind(now, orderId, now, existing.id)
+        .run();
+    } else {
+      await db
+        .prepare(
+          "INSERT INTO memberships (user_id, active, starts_at, order_id, created_at, updated_at) VALUES (?, 1, ?, ?, ?, ?)"
+        )
+        .bind(order.user_id, now, orderId, now, now)
+        .run();
+    }
+
+    return NextResponse.json({ ok: true, message: "已确认收款并激活会员" });
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : "确认失败";
+    return NextResponse.json({ error: msg }, { status: 500 });
+  }
+}

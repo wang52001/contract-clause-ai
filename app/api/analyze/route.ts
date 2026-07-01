@@ -30,7 +30,7 @@ function getClientIp(req: NextRequest): string {
 
 export async function POST(req: NextRequest) {
   try {
-    const body = await req.json().catch(() => null);
+    const body = (await req.json().catch(() => null)) as { text?: string; mode?: string } | null;
     const { text, mode } = body ?? {};
 
     if (typeof text !== "string" || text.trim().length < MIN_LENGTH) {

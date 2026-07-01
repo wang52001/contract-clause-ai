@@ -1,0 +1,34 @@
+import { NextRequest, NextResponse } from "next/server";
+import { getDb } from "@/lib/db/d1";
+import { getSessionUser } from "@/lib/auth/session";
+
+export const runtime = "edge";
+export const dynamic = "force-dynamic";
+
+export async function GET(req: NextRequest) {
+  try {
+    const user = await getSessionUser(req);
+    if (!user) {
+      return NextResponse.json({ user: null, isMember: false });
+    }
+
+    const db = getDb();
+    const now = Date.now();
+
+    const membership = await db
+      .prepare(
+        "SELECT active, expires_at FROM memberships WHERE user_id = ? AND active = 1"
+      )
+      .bind(user.id)
+      .first<{ active: number; expires_at: number | null }>();
+
+    const isMember = Boolean(
+      membership && (membership.expires_at === null || membership.expires_at > now)
+    );
+
+    return NextResponse.json({ user, isMember });
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : "获取用户信息失败";
+    return NextResponse.json({ error: msg }, { status: 500 });
+  }
+}

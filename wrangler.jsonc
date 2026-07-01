@@ -2,5 +2,12 @@
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "contract-clause-ai",
   "compatibility_date": "2026-06-30",
-  "compatibility_flags": ["nodejs_compat"]
+  "compatibility_flags": ["nodejs_compat"],
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "contract-clause-ai-db",
+      "database_id": "<your-d1-database-id>"
+    }
+  ]
 }

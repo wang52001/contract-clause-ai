@@ -47,7 +47,9 @@ export async function callDeepSeek(
     throw new Error(`DeepSeek API 错误 ${res.status}: ${errText.slice(0, 500)}`);
   }
 
-  const data = await res.json();
+  const data = (await res.json()) as {
+    choices?: Array<{ message?: { content?: string } }>;
+  };
   const content = data?.choices?.[0]?.message?.content;
   if (!content || typeof content !== "string") {
     throw new Error("DeepSeek 返回内容为空");

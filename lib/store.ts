@@ -37,7 +37,7 @@ export const useAnalysisStore = create<AnalysisState>((set, get) => ({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ text, mode }),
       });
-      const data = await res.json();
+      const data = (await res.json()) as { error?: string; result?: AnalysisResult; risk?: RiskAssessment; meta?: AnalysisState["meta"] };
       if (!res.ok) throw new Error(data?.error ?? "分析失败");
       set({
         result: data.result,
