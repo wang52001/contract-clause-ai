@@ -96,34 +96,20 @@ export default function PricingPage() {
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1 text-center">
                   <div className="relative aspect-square overflow-hidden rounded-md border bg-muted">
-                    <div className="absolute inset-0 flex flex-col items-center justify-center gap-1 text-xs text-muted-foreground">
-                      <QrCode className="h-5 w-5" />
-                      微信收款码
-                    </div>
                     <img
                       src="/wechat-pay.png"
                       alt="微信收款码"
-                      className="relative z-10 h-full w-full bg-muted object-contain p-2"
-                      onError={(e) => {
-                        e.currentTarget.style.display = "none";
-                      }}
+                      className="h-full w-full bg-muted object-contain p-2"
                     />
                   </div>
                   <p className="text-xs text-muted-foreground">微信支付</p>
                 </div>
                 <div className="space-y-1 text-center">
                   <div className="relative aspect-square overflow-hidden rounded-md border bg-muted">
-                    <div className="absolute inset-0 flex flex-col items-center justify-center gap-1 text-xs text-muted-foreground">
-                      <QrCode className="h-5 w-5" />
-                      支付宝收款码
-                    </div>
                     <img
                       src="/alipay-pay.png"
                       alt="支付宝收款码"
-                      className="relative z-10 h-full w-full bg-muted object-contain p-2"
-                      onError={(e) => {
-                        e.currentTarget.style.display = "none";
-                      }}
+                      className="h-full w-full bg-muted object-contain p-2"
                     />
                   </div>
                   <p className="text-xs text-muted-foreground">支付宝</p>
