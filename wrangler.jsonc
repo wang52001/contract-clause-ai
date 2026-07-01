@@ -1,13 +1,14 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "contract-clause-ai",
+  "pages_build_output_dir": ".vercel/output/static",
   "compatibility_date": "2026-06-30",
   "compatibility_flags": ["nodejs_compat"],
   "d1_databases": [
     {
       "binding": "DB",
       "database_name": "contract-clause-ai-db",
-      "database_id": "<your-d1-database-id>"
+      "database_id": "b1a69278-8315-474c-ba85-0a7562f820f2"
     }
   ]
 }
