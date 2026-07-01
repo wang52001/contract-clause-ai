@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Check, Sparkles, Lock, QrCode } from "lucide-react";
+import { Check, Sparkles, Lock, QrCode, ImageOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useMember } from "@/lib/hooks/useMember";
 
@@ -25,6 +25,10 @@ export default function PricingPage() {
   const { isMember, activate } = useMember();
   const [code, setCode] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [wechatLoaded, setWechatLoaded] = useState(false);
+  const [alipayLoaded, setAlipayLoaded] = useState(false);
+  const [wechatError, setWechatError] = useState(false);
+  const [alipayError, setAlipayError] = useState(false);
 
   const handleActivate = () => {
     setError(null);
@@ -96,33 +100,49 @@ export default function PricingPage() {
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1 text-center">
                   <div className="relative aspect-square overflow-hidden rounded-md border bg-muted">
+                    {!wechatLoaded && !wechatError && (
+                      <div className="absolute inset-0 flex flex-col items-center justify-center gap-1 text-xs text-muted-foreground">
+                        <QrCode className="h-5 w-5" />
+                        微信收款码
+                      </div>
+                    )}
+                    {wechatError && (
+                      <div className="absolute inset-0 flex flex-col items-center justify-center gap-1 text-xs text-muted-foreground">
+                        <ImageOff className="h-5 w-5" />
+                        图片未上传
+                      </div>
+                    )}
                     <img
                       src="/wechat-pay.png"
                       alt="微信收款码"
-                      className="h-full w-full object-contain p-2"
-                      onError={(e) => {
-                        (e.target as HTMLImageElement).style.display = "none";
-                      }}
+                      className={`h-full w-full object-contain p-2 ${wechatLoaded && !wechatError ? "block" : "hidden"}`}
+                      onLoad={() => setWechatLoaded(true)}
+                      onError={() => setWechatError(true)}
                     />
-                    <div className="absolute inset-0 flex items-center justify-center text-xs text-muted-foreground">
-                      微信收款码
-                    </div>
                   </div>
                   <p className="text-xs text-muted-foreground">微信支付</p>
                 </div>
                 <div className="space-y-1 text-center">
                   <div className="relative aspect-square overflow-hidden rounded-md border bg-muted">
+                    {!alipayLoaded && !alipayError && (
+                      <div className="absolute inset-0 flex flex-col items-center justify-center gap-1 text-xs text-muted-foreground">
+                        <QrCode className="h-5 w-5" />
+                        支付宝收款码
+                      </div>
+                    )}
+                    {alipayError && (
+                      <div className="absolute inset-0 flex flex-col items-center justify-center gap-1 text-xs text-muted-foreground">
+                        <ImageOff className="h-5 w-5" />
+                        图片未上传
+                      </div>
+                    )}
                     <img
                       src="/alipay-pay.png"
                       alt="支付宝收款码"
-                      className="h-full w-full object-contain p-2"
-                      onError={(e) => {
-                        (e.target as HTMLImageElement).style.display = "none";
-                      }}
+                      className={`h-full w-full object-contain p-2 ${alipayLoaded && !alipayError ? "block" : "hidden"}`}
+                      onLoad={() => setAlipayLoaded(true)}
+                      onError={() => setAlipayError(true)}
                     />
-                    <div className="absolute inset-0 flex items-center justify-center text-xs text-muted-foreground">
-                      支付宝收款码
-                    </div>
                   </div>
                   <p className="text-xs text-muted-foreground">支付宝</p>
                 </div>
