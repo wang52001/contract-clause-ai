@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
-import { Check, Sparkles, Lock, Loader2, CreditCard, AlertCircle } from "lucide-react";
+import { useState } from "react";
+import { Check, Sparkles, Lock, QrCode } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useMember } from "@/lib/hooks/useMember";
 
@@ -21,28 +21,10 @@ const MEMBER_FEATURES = [
   "深度分析（推理增强）",
 ];
 
-type PayType = "alipay" | "wxpay";
-
 export default function PricingPage() {
-  const { isMember, activate, activatePaid } = useMember();
+  const { isMember, activate } = useMember();
   const [code, setCode] = useState("");
   const [error, setError] = useState<string | null>(null);
-  const [notice, setNotice] = useState<string | null>(null);
-  const [paying, setPaying] = useState<PayType | null>(null);
-  const [payError, setPayError] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    const paid = new URLSearchParams(window.location.search).get("paid");
-    if (paid === "1") {
-      activatePaid();
-      setNotice("支付成功，会员权益已激活");
-      window.history.replaceState({}, "", "/pricing");
-    } else if (paid === "0") {
-      setPayError("支付未完成或仍在处理中，可稍后刷新查看");
-      window.history.replaceState({}, "", "/pricing");
-    }
-  }, [activatePaid]);
 
   const handleActivate = () => {
     setError(null);
@@ -50,28 +32,6 @@ export default function PricingPage() {
       setError("邀请码无效，请检查后重试");
     }
   };
-
-  const handlePay = useCallback(async (type: PayType) => {
-    setPayError(null);
-    setPaying(type);
-    try {
-      const res = await fetch("/api/payment/create", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ type }),
-      });
-      const data = await res.json();
-      if (!data.ok) {
-        setPayError(data.message ?? "支付通道暂不可用，请使用邀请码激活");
-        return;
-      }
-      window.location.href = data.url;
-    } catch {
-      setPayError("网络错误，请稍后重试");
-    } finally {
-      setPaying(null);
-    }
-  }, []);
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-10">
@@ -81,13 +41,6 @@ export default function PricingPage() {
           MVP 阶段会员通过邀请码激活，验证付费意愿
         </p>
       </div>
-
-      {notice && (
-        <div className="mb-6 flex items-center gap-2 rounded-md border border-green-200 bg-green-50 p-3 text-sm text-green-700">
-          <Check className="h-4 w-4 shrink-0" />
-          {notice}
-        </div>
-      )}
 
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="rounded-lg border bg-card p-6">
@@ -129,42 +82,51 @@ export default function PricingPage() {
               已激活会员权益
             </div>
           ) : (
-            <div className="mt-6 space-y-3">
-              <div className="grid grid-cols-2 gap-2">
-                <Button
-                  onClick={() => handlePay("alipay")}
-                  disabled={paying !== null}
-                  variant="outline"
-                  size="sm"
-                >
-                  {paying === "alipay" ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <CreditCard className="h-4 w-4" />
-                  )}
-                  支付宝 ¥9.9
-                </Button>
-                <Button
-                  onClick={() => handlePay("wxpay")}
-                  disabled={paying !== null}
-                  variant="outline"
-                  size="sm"
-                >
-                  {paying === "wxpay" ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <CreditCard className="h-4 w-4" />
-                  )}
-                  微信支付 ¥9.9
-                </Button>
+            <div className="mt-6 space-y-4">
+              <div className="rounded-md border border-amber-200 bg-amber-50 p-3 text-sm text-amber-700">
+                <div className="mb-1 flex items-center gap-2 font-medium">
+                  <QrCode className="h-4 w-4" />
+                  扫码购买 ¥9.9
+                </div>
+                <p className="text-xs leading-relaxed">
+                  微信或支付宝扫码付款，备注你的手机号。我会手动发送邀请码，通常 10 分钟内到账。
+                </p>
               </div>
 
-              {payError && (
-                <div className="flex items-start gap-2 rounded-md border border-amber-200 bg-amber-50 p-2 text-xs text-amber-700">
-                  <AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
-                  {payError}
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1 text-center">
+                  <div className="relative aspect-square overflow-hidden rounded-md border bg-muted">
+                    <img
+                      src="/wechat-pay.png"
+                      alt="微信收款码"
+                      className="h-full w-full object-contain p-2"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).style.display = "none";
+                      }}
+                    />
+                    <div className="absolute inset-0 flex items-center justify-center text-xs text-muted-foreground">
+                      微信收款码
+                    </div>
+                  </div>
+                  <p className="text-xs text-muted-foreground">微信支付</p>
                 </div>
-              )}
+                <div className="space-y-1 text-center">
+                  <div className="relative aspect-square overflow-hidden rounded-md border bg-muted">
+                    <img
+                      src="/alipay-pay.png"
+                      alt="支付宝收款码"
+                      className="h-full w-full object-contain p-2"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).style.display = "none";
+                      }}
+                    />
+                    <div className="absolute inset-0 flex items-center justify-center text-xs text-muted-foreground">
+                      支付宝收款码
+                    </div>
+                  </div>
+                  <p className="text-xs text-muted-foreground">支付宝</p>
+                </div>
+              </div>
 
               <div className="relative py-1">
                 <div className="absolute inset-0 flex items-center">
@@ -196,8 +158,8 @@ export default function PricingPage() {
 
       <div className="mt-8 rounded-lg border bg-muted/30 p-4 text-xs text-muted-foreground">
         <p className="mb-1 font-medium text-foreground">说明</p>
-        MVP 阶段支付为骨架接入，未配置商户号时优先使用邀请码激活。正式上线后接入微信/支付宝，
-        单份报告 ¥9.9，会员月卡 ¥29.9。本工具不替代律师，重大合同请咨询执业律师。
+        当前为个人收款模式：扫码付款后我会手动发送邀请码。MVP 阶段也开放内测邀请码免费体验。
+        单份报告 ¥9.9。本工具不替代律师，重大合同请咨询执业律师。
       </div>
     </div>
   );
