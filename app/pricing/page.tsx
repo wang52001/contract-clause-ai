@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState } from "react";
 import { Check, Sparkles, Lock, QrCode, LogIn, Loader2, Gift } from "lucide-react";
@@ -153,7 +153,7 @@ export default function PricingPage() {
                   套餐：{order.quantity} 份 · 金额：¥{(order.amount / 100).toFixed(2)}
                   <br />
                   扫码付款时<span className="font-semibold">务必备注订单号</span>，付款后我会尽快确认。
-                </p>
+                */}
               </div>
 
               <div className="grid grid-cols-2 gap-3">
@@ -232,9 +232,9 @@ export default function PricingPage() {
                 <Gift className="mr-1 h-4 w-4" />
                 激活邀请码
               </Button>
-              <p className="text-center text-xs text-muted-foreground">
-                内测邀请码：FREELANCER2026
-              </p>
+              {/*
+                内测邀请码已结束
+              */}
             </div>
           )}
         </div>

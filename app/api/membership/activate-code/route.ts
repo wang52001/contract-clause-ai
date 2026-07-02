@@ -50,15 +50,7 @@ export async function POST(req: NextRequest) {
           .run();
       }
     } else if (LEGACY_CODES.includes(rawCode)) {
-      // 通用测试码：每个用户只能使用一次
-      const existingOrder = await db
-        .prepare("SELECT id FROM orders WHERE user_id = ? AND note = ? AND payment_method = 'invite'")
-        .bind(user.id, rawCode)
-        .first<{ id: number }>();
-
-      if (existingOrder) {
-        return NextResponse.json({ error: "您已经使用过该邀请码" }, { status: 400 });
-      }
+      return NextResponse.json({ error: "内测邀请码已结束" }, { status: 400 });
     } else {
       return NextResponse.json({ error: "邀请码无效" }, { status: 400 });
     }
