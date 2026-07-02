@@ -1,4 +1,4 @@
-import { getDb } from "@/lib/db/d1";
+﻿import { getDb } from "@/lib/db/d1";
 
 const SESSION_DAYS = 30;
 const COOKIE_NAME = "fcg_session";
@@ -96,7 +96,16 @@ export async function createUserIfNotExists(email: string): Promise<number> {
     .bind(normalized, now, now)
     .run();
 
-  return result.meta.last_row_id as number;
+  const userId = result.meta.last_row_id as number;
+
+  await db
+    .prepare(
+      "INSERT OR IGNORE INTO memberships (user_id, active, starts_at, expires_at, created_at, updated_at, credits) VALUES (?, 1, ?, NULL, ?, ?, 3)"
+    )
+    .bind(userId, now, now, now)
+    .run();
+
+  return userId;
 }
 
 export async function getUserByEmail(email: string): Promise<SessionUser | null> {

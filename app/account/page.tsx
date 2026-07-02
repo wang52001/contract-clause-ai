@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
@@ -37,7 +37,7 @@ interface Message {
 }
 
 export default function AccountPage() {
-  const { user, loaded, isMember } = useMember();
+  const { user, loaded, credits } = useMember();
   const router = useRouter();
 
   const [orders, setOrders] = useState<Order[]>([]);
@@ -166,20 +166,20 @@ export default function AccountPage() {
             <div>
               <div className="font-semibold">{user.email}</div>
               <div className="text-xs text-muted-foreground">
-                {isMember ? "会员权益已解锁" : "登录账户"}
+                {credits > 0 ? "分析次数已解锁" : "登录账户"}
               </div>
             </div>
           </div>
           <div>
-            {isMember ? (
+            {credits > 0 ? (
               <div className="flex items-center gap-2 rounded-full bg-amber-100 px-3 py-1.5 text-sm font-medium text-amber-800">
                 <Crown className="h-4 w-4" />
-                会员已激活
+                剩余 {credits} 份
               </div>
             ) : (
               <div className="flex items-center gap-2 rounded-full bg-muted px-3 py-1.5 text-sm text-muted-foreground">
                 <Clock className="h-4 w-4" />
-                免费版
+                暂无次数
               </div>
             )}
           </div>

@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+﻿import { NextRequest, NextResponse } from "next/server";
 import { getDb } from "@/lib/db/d1";
 import { getSessionUser } from "@/lib/auth/session";
 
@@ -82,27 +82,27 @@ export async function POST(req: NextRequest) {
     }
 
     const existing = await db
-      .prepare("SELECT id FROM memberships WHERE user_id = ?")
+      .prepare("SELECT id, credits FROM memberships WHERE user_id = ?")
       .bind(user.id)
-      .first<{ id: number }>();
+      .first<{ id: number; credits: number }>();
 
     if (existing) {
       await db
         .prepare(
-          "UPDATE memberships SET active = 1, starts_at = ?, order_id = ?, updated_at = ? WHERE id = ?"
+          "UPDATE memberships SET active = 1, credits = credits + 1, starts_at = ?, order_id = ?, updated_at = ? WHERE id = ?"
         )
         .bind(now, orderId, now, existing.id)
         .run();
     } else {
       await db
         .prepare(
-          "INSERT INTO memberships (user_id, active, starts_at, order_id, created_at, updated_at) VALUES (?, 1, ?, ?, ?, ?)"
+          "INSERT INTO memberships (user_id, active, credits, starts_at, order_id, created_at, updated_at) VALUES (?, 1, 1, ?, ?, ?, ?)"
         )
         .bind(user.id, now, orderId, now, now)
         .run();
     }
 
-    return NextResponse.json({ ok: true, message: "邀请码激活成功" });
+    return NextResponse.json({ ok: true, message: "邀请码激活成功，已到账 1 份分析次数" });
   } catch (err) {
     const msg = err instanceof Error ? err.message : "激活失败";
     return NextResponse.json({ error: msg }, { status: 500 });

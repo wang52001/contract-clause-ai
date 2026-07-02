@@ -12,9 +12,10 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "请先登录" }, { status: 401 });
     }
 
-    const body = (await req.json().catch(() => null)) as { paymentMethod?: string; amount?: number; note?: string } | null;
+    const body = (await req.json().catch(() => null)) as { paymentMethod?: string; amount?: number; quantity?: number; note?: string } | null;
     const paymentMethod = body?.paymentMethod === "alipay" ? "alipay" : "wxpay";
     const amount = typeof body?.amount === "number" && body.amount > 0 ? body.amount : 990;
+    const quantity = typeof body?.quantity === "number" && body.quantity > 0 ? body.quantity : 1;
     const note = typeof body?.note === "string" ? body.note : "";
 
     const db = getDb();
@@ -22,14 +23,15 @@ export async function POST(req: NextRequest) {
 
     const existing = await db
       .prepare(
-        "SELECT id, amount, status, payment_method, note, created_at FROM orders WHERE user_id = ? AND status = 'pending' LIMIT 1"
+        "SELECT id, amount, status, payment_method, quantity, note, created_at FROM orders WHERE user_id = ? AND status = 'pending' AND amount = ? AND quantity = ? LIMIT 1"
       )
-      .bind(user.id)
+      .bind(user.id, amount, quantity)
       .first<{
         id: number;
         amount: number;
         status: string;
         payment_method: string;
+        quantity: number;
         note: string;
         created_at: number;
       }>();
@@ -43,6 +45,7 @@ export async function POST(req: NextRequest) {
           amount: existing.amount,
           status: existing.status,
           paymentMethod: existing.payment_method,
+          quantity: existing.quantity,
           note: existing.note,
           createdAt: existing.created_at,
         },
@@ -51,9 +54,9 @@ export async function POST(req: NextRequest) {
 
     const result = await db
       .prepare(
-        "INSERT INTO orders (user_id, amount, status, payment_method, note, created_at, updated_at) VALUES (?, ?, 'pending', ?, ?, ?, ?)"
+        "INSERT INTO orders (user_id, amount, status, payment_method, quantity, note, created_at, updated_at) VALUES (?, ?, 'pending', ?, ?, ?, ?, ?)"
       )
-      .bind(user.id, amount, paymentMethod, note, now, now)
+      .bind(user.id, amount, paymentMethod, quantity, note, now, now)
       .run();
 
     const orderId = result.meta.last_row_id as number;
@@ -65,6 +68,7 @@ export async function POST(req: NextRequest) {
         amount,
         status: "pending",
         paymentMethod,
+        quantity,
         note,
         createdAt: now,
       },
@@ -85,7 +89,7 @@ export async function GET(req: NextRequest) {
     const db = getDb();
     const { results } = await db
       .prepare(
-        "SELECT id, amount, status, payment_method, note, created_at, paid_at FROM orders WHERE user_id = ? ORDER BY created_at DESC"
+        "SELECT id, amount, status, payment_method, quantity, note, created_at, paid_at FROM orders WHERE user_id = ? ORDER BY created_at DESC"
       )
       .bind(user.id)
       .all<{
@@ -93,6 +97,7 @@ export async function GET(req: NextRequest) {
         amount: number;
         status: string;
         payment_method: string;
+        quantity: number;
         note: string;
         created_at: number;
         paid_at: number | null;
@@ -103,6 +108,7 @@ export async function GET(req: NextRequest) {
       amount: r.amount,
       status: r.status,
       paymentMethod: r.payment_method,
+      quantity: r.quantity,
       note: r.note,
       createdAt: r.created_at,
       paidAt: r.paid_at,

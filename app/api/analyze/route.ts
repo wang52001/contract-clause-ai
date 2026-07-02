@@ -1,6 +1,8 @@
-import { NextRequest, NextResponse } from "next/server";
+﻿import { NextRequest, NextResponse } from "next/server";
 import { analyzeContract } from "@/lib/ai/parse";
 import { assessRisk } from "@/lib/scoring/risk";
+import { getDb } from "@/lib/db/d1";
+import { getSessionUser } from "@/lib/auth/session";
 
 export const runtime = "edge";
 export const dynamic = "force-dynamic";
@@ -54,6 +56,36 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    const user = await getSessionUser(req);
+    const db = getDb();
+    let creditsAfter = 0;
+
+    if (user) {
+      const membership = await db
+        .prepare("SELECT id, credits FROM memberships WHERE user_id = ? AND active = 1")
+        .bind(user.id)
+        .first<{ id: number; credits: number }>();
+
+      if (!membership || membership.credits <= 0) {
+        return NextResponse.json(
+          { error: "分析次数已用完，请去购买套餐", code: "NO_CREDITS" },
+          { status: 403 }
+        );
+      }
+
+      await db
+        .prepare("UPDATE memberships SET credits = credits - 1, updated_at = ? WHERE id = ?")
+        .bind(Date.now(), membership.id)
+        .run();
+
+      creditsAfter = membership.credits - 1;
+    } else {
+      return NextResponse.json(
+        { error: "请先登录后再分析", code: "UNAUTHORIZED" },
+        { status: 401 }
+      );
+    }
+
     const analyzeMode = mode === "deep" ? "deep" : "basic";
 
     const startedAt = Date.now();
@@ -65,6 +97,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({
       result,
       risk,
+      credits: creditsAfter,
       meta: { mode: analyzeMode, elapsedMs, clauseCount: result.clauses.length },
     });
   } catch (err) {

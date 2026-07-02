@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { Loader2, ScanText, ShieldCheck, Sparkles, RotateCcw, AlertCircle } from "lucide-react";
 import { useAnalysisStore } from "@/lib/store";
 import { useMember } from "@/lib/hooks/useMember";
@@ -17,20 +18,38 @@ export default function Home() {
   const meta = useAnalysisStore((s) => s.meta);
   const analyze = useAnalysisStore((s) => s.analyze);
   const reset = useAnalysisStore((s) => s.reset);
-  const { isMember } = useMember();
+  const { user, loaded, credits } = useMember();
+
+  const hasCredits = credits > 0;
 
   if (result && risk) {
     return (
       <div className="mx-auto max-w-3xl px-4 py-6">
-        <div className="mb-4 flex items-center justify-between print:hidden">
+        <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between print:hidden">
           <h1 className="text-xl font-bold">审查报告</h1>
-          <Button onClick={reset} variant="ghost" size="sm">
-            <RotateCcw className="h-4 w-4" />
-            重新审查
-          </Button>
+          <div className="flex items-center gap-3">
+            {loaded && user && (
+              <span className="text-sm text-muted-foreground">
+                剩余 {credits} 份
+              </span>
+            )}
+            <Button onClick={reset} variant="ghost" size="sm" disabled={!hasCredits}>
+              <RotateCcw className="h-4 w-4" />
+              重新审查
+            </Button>
+          </div>
         </div>
 
-        <ReportView result={result} risk={risk} isMember={isMember} meta={meta} />
+        {!hasCredits && (
+          <div className="mb-4 rounded-md border border-amber-200 bg-amber-50 p-3 text-sm text-amber-700">
+            分析次数已用完，
+            <Link href="/pricing" className="font-semibold underline">
+              去购买套餐
+            </Link>
+          </div>
+        )}
+
+        <ReportView result={result} risk={risk} isMember={hasCredits} meta={meta} />
       </div>
     );
   }
@@ -69,10 +88,13 @@ export default function Home() {
       </div>
 
       <div className="space-y-4 rounded-lg border bg-card p-4">
-        <div>
-          <h2 className="mb-2 text-sm font-medium">上传合同文件</h2>
-          <FileDropzone />
+        <div className="flex items-center justify-between">
+          <h2 className="text-sm font-medium">上传合同文件</h2>
+          {loaded && user && (
+            <span className="text-sm text-muted-foreground">剩余 {credits} 份</span>
+          )}
         </div>
+        <FileDropzone />
 
         <div className="relative">
           <div className="absolute inset-0 flex items-center">
@@ -88,13 +110,18 @@ export default function Home() {
         {error && (
           <div className="flex items-center gap-2 rounded-md border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive">
             <AlertCircle className="h-4 w-4 shrink-0" />
-            {error}
+            <span className="flex-1">{error}</span>
+            {error.includes("次数已用完") && (
+              <Link href="/pricing">
+                <Button size="sm" variant="outline">去购买</Button>
+              </Link>
+            )}
           </div>
         )}
 
         <Button
           onClick={() => analyze("basic")}
-          disabled={loading || text.trim().length < 80}
+          disabled={loading || text.trim().length < 80 || !hasCredits}
           className="w-full"
           size="lg"
         >
@@ -102,6 +129,11 @@ export default function Home() {
             <>
               <Loader2 className="h-4 w-4 animate-spin" />
               AI 正在审查…
+            </>
+          ) : !hasCredits && loaded && user ? (
+            <>
+              <ScanText className="h-4 w-4" />
+              次数已用完
             </>
           ) : (
             <>
@@ -114,6 +146,8 @@ export default function Home() {
         <p className="text-center text-xs text-muted-foreground">
           {text.trim().length < 80
             ? `还需输入至少 ${80 - text.trim().length} 个字符`
+            : !hasCredits && loaded && user
+            ? "分析次数不足，请购买套餐"
             : "点击审查即同意本工具分析结果仅供参考"}
         </p>
       </div>

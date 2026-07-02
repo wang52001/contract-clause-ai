@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+﻿import { NextRequest, NextResponse } from "next/server";
 import { getDb, getEnv } from "@/lib/db/d1";
 
 export const runtime = "edge";
@@ -42,9 +42,9 @@ export async function POST(
     const now = Date.now();
 
     const order = await db
-      .prepare("SELECT id, user_id, status FROM orders WHERE id = ?")
+      .prepare("SELECT id, user_id, status, quantity FROM orders WHERE id = ?")
       .bind(orderId)
-      .first<{ id: number; user_id: number; status: string }>();
+      .first<{ id: number; user_id: number; status: string; quantity: number }>();
 
     if (!order) {
       return NextResponse.json({ error: "订单不存在" }, { status: 404 });
@@ -61,24 +61,25 @@ export async function POST(
       .bind(now, now, orderId)
       .run();
 
+    const creditsToAdd = order.quantity || 1;
     const existing = await db
-      .prepare("SELECT id FROM memberships WHERE user_id = ?")
+      .prepare("SELECT id, credits FROM memberships WHERE user_id = ?")
       .bind(order.user_id)
-      .first<{ id: number }>();
+      .first<{ id: number; credits: number }>();
 
     if (existing) {
       await db
         .prepare(
-          "UPDATE memberships SET active = 1, starts_at = ?, order_id = ?, updated_at = ? WHERE id = ?"
+          "UPDATE memberships SET active = 1, credits = credits + ?, starts_at = ?, order_id = ?, updated_at = ? WHERE id = ?"
         )
-        .bind(now, orderId, now, existing.id)
+        .bind(creditsToAdd, now, orderId, now, existing.id)
         .run();
     } else {
       await db
         .prepare(
-          "INSERT INTO memberships (user_id, active, starts_at, order_id, created_at, updated_at) VALUES (?, 1, ?, ?, ?, ?)"
+          "INSERT INTO memberships (user_id, active, credits, starts_at, order_id, created_at, updated_at) VALUES (?, 1, ?, ?, ?, ?, ?)"
         )
-        .bind(order.user_id, now, orderId, now, now)
+        .bind(order.user_id, creditsToAdd, now, orderId, now, now)
         .run();
     }
 
@@ -107,7 +108,7 @@ export async function POST(
         .bind(
           orderId,
           order.user_id,
-          `【已确认收款】感谢您的支付，会员已激活。邀请码：${inviteCode}（一次性，请及时使用）`,
+          `【已确认收款】已到账 ${creditsToAdd} 份分析次数。邀请码：${inviteCode}（一次性，请及时使用）`,
           now
         )
         .run();
@@ -116,13 +117,13 @@ export async function POST(
         .prepare(
           "INSERT INTO order_messages (order_id, user_id, role, content, created_at) VALUES (?, ?, 'admin', ?, ?)"
         )
-        .bind(orderId, order.user_id, "【已确认收款】感谢您的支付，会员已激活。", now)
+        .bind(orderId, order.user_id, `【已确认收款】已到账 ${creditsToAdd} 份分析次数。`, now)
         .run();
     }
 
     return NextResponse.json({
       ok: true,
-      message: "已确认收款并激活会员",
+      message: `已确认收款，到账 ${creditsToAdd} 份分析次数`,
       inviteCode,
     });
   } catch (err) {
