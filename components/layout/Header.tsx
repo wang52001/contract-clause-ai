@@ -25,10 +25,13 @@ export function Header() {
           {loaded ? (
             user ? (
               <div className="flex items-center gap-2">
-                <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                <Link
+                  href="/account"
+                  className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
+                >
                   <User className="h-3.5 w-3.5" />
                   {user.email}
-                </span>
+                </Link>
                 <Button variant="ghost" size="sm" onClick={logout} className="h-8 px-2 text-xs">
                   <LogOut className="mr-1 h-3.5 w-3.5" />
                   退出

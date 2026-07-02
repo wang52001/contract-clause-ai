@@ -10,6 +10,15 @@ function getAdminSecret(req: NextRequest): string | null {
   return auth.slice(7);
 }
 
+function generateInviteCode(): string {
+  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+  let code = "";
+  for (let i = 0; i < 12; i++) {
+    code += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return code;
+}
+
 export async function POST(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -26,13 +35,16 @@ export async function POST(
       return NextResponse.json({ error: "订单 ID 无效" }, { status: 400 });
     }
 
+    const body = (await req.json().catch(() => ({}))) as { sendInviteCode?: boolean } | null;
+    const sendInviteCode = body?.sendInviteCode === true;
+
     const db = getDb();
     const now = Date.now();
 
     const order = await db
-      .prepare("SELECT user_id, status FROM orders WHERE id = ?")
+      .prepare("SELECT id, user_id, status FROM orders WHERE id = ?")
       .bind(orderId)
-      .first<{ user_id: number; status: string }>();
+      .first<{ id: number; user_id: number; status: string }>();
 
     if (!order) {
       return NextResponse.json({ error: "订单不存在" }, { status: 404 });
@@ -70,7 +82,49 @@ export async function POST(
         .run();
     }
 
-    return NextResponse.json({ ok: true, message: "已确认收款并激活会员" });
+    let inviteCode: string | null = null;
+    if (sendInviteCode) {
+      let code = generateInviteCode();
+      let tries = 0;
+      while (tries < 5) {
+        try {
+          await db
+            .prepare("INSERT INTO invite_codes (code, order_id, created_at) VALUES (?, ?, ?)")
+            .bind(code, orderId, now)
+            .run();
+          break;
+        } catch {
+          code = generateInviteCode();
+          tries++;
+        }
+      }
+      inviteCode = code;
+
+      await db
+        .prepare(
+          "INSERT INTO order_messages (order_id, user_id, role, content, created_at) VALUES (?, ?, 'admin', ?, ?)"
+        )
+        .bind(
+          orderId,
+          order.user_id,
+          `【已确认收款】感谢您的支付，会员已激活。邀请码：${inviteCode}（一次性，请及时使用）`,
+          now
+        )
+        .run();
+    } else {
+      await db
+        .prepare(
+          "INSERT INTO order_messages (order_id, user_id, role, content, created_at) VALUES (?, ?, 'admin', ?, ?)"
+        )
+        .bind(orderId, order.user_id, "【已确认收款】感谢您的支付，会员已激活。", now)
+        .run();
+    }
+
+    return NextResponse.json({
+      ok: true,
+      message: "已确认收款并激活会员",
+      inviteCode,
+    });
   } catch (err) {
     const msg = err instanceof Error ? err.message : "确认失败";
     return NextResponse.json({ error: msg }, { status: 500 });
