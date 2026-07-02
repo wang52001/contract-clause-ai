@@ -1,9 +1,8 @@
-"use client";
+﻿"use client";
 
 import Link from "next/link";
 import { ShieldCheck, LogOut, User, Loader2 } from "lucide-react";
 import { useMember } from "@/lib/hooks/useMember";
-import { Button } from "@/components/ui/button";
 
 export function Header() {
   const { user, loaded, logout } = useMember();
@@ -24,24 +23,28 @@ export function Header() {
           </Link>
           {loaded ? (
             user ? (
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-3">
                 <Link
                   href="/account"
-                  className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
+                  className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
                 >
-                  <User className="h-3.5 w-3.5" />
+                  <User className="h-4 w-4" />
                   {user.email}
                 </Link>
-                <Button variant="ghost" size="sm" onClick={logout} className="h-8 px-2 text-xs">
-                  <LogOut className="mr-1 h-3.5 w-3.5" />
+                <button
+                  onClick={logout}
+                  className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
+                >
+                  <LogOut className="h-4 w-4" />
                   退出
-                </Button>
+                </button>
               </div>
             ) : (
-              <Link href="/pricing">
-                <Button variant="ghost" size="sm" className="h-8 px-2 text-xs">
-                  登录
-                </Button>
+              <Link
+                href="/pricing"
+                className="text-muted-foreground hover:text-foreground"
+              >
+                登录
               </Link>
             )
           ) : (

@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState } from "react";
 import { Check, Sparkles, Lock, QrCode, LogIn, Loader2 } from "lucide-react";
@@ -228,7 +228,7 @@ export default function PricingPage() {
       <LoginDialog
         open={loginOpen}
         onClose={() => setLoginOpen(false)}
-        onSuccess={() => refresh()}
+        onSuccess={() => window.location.reload()}
       />
     </div>
   );
