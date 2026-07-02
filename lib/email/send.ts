@@ -13,9 +13,11 @@ export async function sendVerificationEmail(email: string, code: string): Promis
   }
 
   if (provider === "resend") {
-    if (!env.RESEND_API_KEY || !env.FROM_EMAIL) {
-      console.log(`[EMAIL to ${email}] ${subject}\n${body}`);
-      return { ok: true, message: "邮件配置缺失，验证码已输出到控制台" };
+    if (!env.RESEND_API_KEY) {
+      return { ok: false, message: "环境变量 RESEND_API_KEY 未配置" };
+    }
+    if (!env.FROM_EMAIL) {
+      return { ok: false, message: "环境变量 FROM_EMAIL 未配置" };
     }
 
     try {
@@ -35,16 +37,15 @@ export async function sendVerificationEmail(email: string, code: string): Promis
 
       if (!res.ok) {
         const data = (await res.json().catch(() => ({}))) as { message?: string };
-        return { ok: false, message: data?.message || "邮件发送失败" };
+        return { ok: false, message: `Resend 错误: ${data?.message || res.statusText}` };
       }
 
       return { ok: true, message: "验证码已发送" };
     } catch (err) {
       const msg = err instanceof Error ? err.message : "邮件发送异常";
-      return { ok: false, message: msg };
+      return { ok: false, message: `请求异常: ${msg}` };
     }
   }
 
-  console.log(`[EMAIL to ${email}] ${subject}\n${body}`);
-  return { ok: true, message: "未知邮件服务商，验证码已输出到控制台" };
+  return { ok: false, message: `未知的邮件服务商: ${provider}` };
 }
