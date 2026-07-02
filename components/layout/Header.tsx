@@ -1,11 +1,15 @@
 ﻿"use client";
 
 import Link from "next/link";
+import { usePathname, useRouter } from "next/navigation";
 import { ShieldCheck, LogOut, User, Loader2 } from "lucide-react";
 import { useMember } from "@/lib/hooks/useMember";
 
 export function Header() {
   const { user, loaded, logout } = useMember();
+  const pathname = usePathname();
+  const router = useRouter();
+  const isAdmin = pathname === "/admin" || pathname?.startsWith("/admin/");
 
   return (
     <header className="sticky top-0 z-40 w-full border-b border-border bg-background/80 backdrop-blur">
@@ -22,7 +26,26 @@ export function Header() {
             定价
           </Link>
           {loaded ? (
-            user ? (
+            isAdmin ? (
+              <div className="flex items-center gap-3">
+                <span className="flex items-center gap-1 text-sm text-muted-foreground">
+                  <User className="h-4 w-4" />
+                  admin
+                </span>
+                <button
+                  onClick={() => {
+                    if (typeof window !== "undefined") {
+                      sessionStorage.removeItem("fcg_admin_secret");
+                    }
+                    router.push("/");
+                  }}
+                  className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
+                >
+                  <LogOut className="h-4 w-4" />
+                  退出
+                </button>
+              </div>
+            ) : user ? (
               <div className="flex items-center gap-3">
                 <Link
                   href="/account"
