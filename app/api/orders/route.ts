@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+﻿import { NextRequest, NextResponse } from "next/server";
 import { getDb } from "@/lib/db/d1";
 import { getSessionUser } from "@/lib/auth/session";
 
@@ -19,6 +19,35 @@ export async function POST(req: NextRequest) {
 
     const db = getDb();
     const now = Date.now();
+
+    const existing = await db
+      .prepare(
+        "SELECT id, amount, status, payment_method, note, created_at FROM orders WHERE user_id = ? AND status = 'pending' LIMIT 1"
+      )
+      .bind(user.id)
+      .first<{
+        id: number;
+        amount: number;
+        status: string;
+        payment_method: string;
+        note: string;
+        created_at: number;
+      }>();
+
+    if (existing) {
+      return NextResponse.json({
+        ok: true,
+        existing: true,
+        order: {
+          id: existing.id,
+          amount: existing.amount,
+          status: existing.status,
+          paymentMethod: existing.payment_method,
+          note: existing.note,
+          createdAt: existing.created_at,
+        },
+      });
+    }
 
     const result = await db
       .prepare(

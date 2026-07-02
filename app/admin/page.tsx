@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState, useEffect, useCallback } from "react";
 import { Loader2, CheckCircle, Shield, RefreshCw, MessageSquare, Send, Gift, Copy, Check } from "lucide-react";
@@ -110,6 +110,10 @@ export default function AdminPage() {
 
   useEffect(() => {
     fetchOrders();
+    const interval = setInterval(() => {
+      fetchOrders();
+    }, 10000);
+    return () => clearInterval(interval);
   }, [fetchOrders]);
 
   useEffect(() => {
