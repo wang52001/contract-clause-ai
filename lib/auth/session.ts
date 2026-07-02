@@ -100,7 +100,7 @@ export async function createUserIfNotExists(email: string): Promise<number> {
 
   await db
     .prepare(
-      "INSERT OR IGNORE INTO memberships (user_id, active, starts_at, expires_at, created_at, updated_at, credits) VALUES (?, 1, ?, NULL, ?, ?, 3)"
+      "INSERT OR IGNORE INTO memberships (user_id, active, starts_at, expires_at, created_at, updated_at, credits) VALUES (?, 1, ?, NULL, ?, ?, 1)"
     )
     .bind(userId, now, now, now)
     .run();
