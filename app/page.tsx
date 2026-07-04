@@ -1,8 +1,11 @@
 ﻿"use client";
 
-import { useState } from "react";
+import type { AnalysisResult } from "@/lib/ai/schema";
+import type { RiskAssessment } from "@/lib/scoring/risk";
+
+import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Loader2, ScanText, ShieldCheck, Sparkles, RotateCcw, AlertCircle, Lock } from "lucide-react";
+import { Loader2, ScanText, ShieldCheck, Sparkles, RotateCcw, AlertCircle, Lock, History } from "lucide-react";
 import { useAnalysisStore } from "@/lib/store";
 import { useMember } from "@/lib/hooks/useMember";
 import { FileDropzone } from "@/components/upload/FileDropzone";
@@ -21,10 +24,46 @@ export default function Home() {
   const meta = useAnalysisStore((s) => s.meta);
   const analyze = useAnalysisStore((s) => s.analyze);
   const reset = useAnalysisStore((s) => s.reset);
-  const { user, loaded, credits } = useMember();
+  const setResult = useAnalysisStore((s) => s.setResult);
+  const { user, loaded, credits, previewUsed } = useMember();
   const [loginOpen, setLoginOpen] = useState(false);
+  const [loadingHistory, setLoadingHistory] = useState(false);
 
   const hasCredits = credits > 0;
+
+  useEffect(() => {
+    if (loaded && user && previewUsed && !result && !loadingHistory) {
+      setLoadingHistory(true);
+      fetch("/api/preview", { credentials: "same-origin" })
+        .then((res) => res.json())
+        .then((raw) => {
+          const data = raw as { preview?: { result: AnalysisResult; risk: RiskAssessment; meta: { mode: string; elapsedMs: number; clauseCount: number } } };
+          if (data.preview) {
+            setResult(data.preview.result, data.preview.risk, true, data.preview.meta);
+          }
+        })
+        .finally(() => setLoadingHistory(false));
+    }
+  }, [loaded, user, previewUsed, result, loadingHistory, setResult]);
+
+  const handleAnalyze = async () => {
+    if (!user) {
+      setLoginOpen(true);
+      return;
+    }
+    await analyze("basic");
+  };
+
+  const getButtonState = () => {
+    if (loading) return { text: "AI 正在审查…", disabled: true };
+    if (!loaded) return { text: "开始审查", disabled: true };
+    if (!user) return { text: "登录后免费预览", disabled: false };
+    if (hasCredits) return { text: "开始审查", disabled: false };
+    if (previewUsed) return { text: "免费预览次数已用完", disabled: true };
+    return { text: "免费预览", disabled: false };
+  };
+
+  const buttonState = getButtonState();
 
   if (result && risk) {
     return (
@@ -137,9 +176,16 @@ export default function Home() {
           </div>
         )}
 
+        {previewUsed && user && !hasCredits && (
+          <div className="flex items-center gap-2 rounded-md border border-amber-200 bg-amber-50 p-3 text-sm text-amber-700">
+            <History className="h-4 w-4 shrink-0" />
+            <span>你已使用过免费预览，可点击下方按钮查看历史记录，或购买套餐解锁完整功能。</span>
+          </div>
+        )}
+
         <Button
-          onClick={() => analyze("basic")}
-          disabled={loading || text.trim().length < 80}
+          onClick={handleAnalyze}
+          disabled={buttonState.disabled || loading || text.trim().length < 80}
           className="w-full"
           size="lg"
         >
@@ -151,7 +197,7 @@ export default function Home() {
           ) : (
             <>
               <ScanText className="h-4 w-4" />
-              {!user && loaded ? "免费预览" : !hasCredits && loaded && user ? "免费预览" : "开始审查"}
+              {buttonState.text}
             </>
           )}
         </Button>
@@ -159,7 +205,7 @@ export default function Home() {
         <p className="text-center text-xs text-muted-foreground">
           {text.trim().length < 80
             ? `还需输入至少 ${80 - text.trim().length} 个字符`
-            : "登录并购买套餐后可查看完整 8 类条款详情、修改建议、谈判话术与法律依据"}
+            : "登录后可获得 1 次免费预览，购买套餐后可查看完整 8 类条款详情"}
         </p>
       </div>
 

@@ -14,6 +14,7 @@ export function useMember() {
   const [credits, setCredits] = useState(0);
   const [inviteCode, setInviteCode] = useState<string | null>(null);
   const [inviteCount, setInviteCount] = useState(0);
+  const [previewUsed, setPreviewUsed] = useState(false);
   const [user, setUser] = useState<MemberUser | null>(null);
   const [loaded, setLoaded] = useState(false);
 
@@ -28,18 +29,21 @@ export function useMember() {
         credits?: number;
         inviteCode?: string | null;
         inviteCount?: number;
+        previewUsed?: boolean;
       };
       setUser(data.user ?? null);
       setIsMember(data.isMember ?? false);
       setCredits(data.credits ?? 0);
       setInviteCode(data.inviteCode ?? null);
       setInviteCount(data.inviteCount ?? 0);
+      setPreviewUsed(data.previewUsed ?? false);
     } catch {
       setUser(null);
       setIsMember(false);
       setCredits(0);
       setInviteCode(null);
       setInviteCount(0);
+      setPreviewUsed(false);
     } finally {
       setLoaded(true);
     }
@@ -88,6 +92,7 @@ export function useMember() {
       setCredits(0);
       setInviteCode(null);
       setInviteCount(0);
+      setPreviewUsed(false);
       try {
         localStorage.removeItem(LEGACY_KEY);
       } catch {}
@@ -137,6 +142,7 @@ export function useMember() {
     credits,
     inviteCode,
     inviteCount,
+    previewUsed,
     user,
     loaded,
     login,

@@ -27,6 +27,11 @@ export async function GET(req: NextRequest) {
       .bind(sessionUser.id)
       .first<{ active: number; expires_at: number | null; credits: number }>();
 
+    const previewRow = await db
+      .prepare("SELECT id FROM user_previews WHERE user_id = ?")
+      .bind(sessionUser.id)
+      .first<{ id: number }>();
+
     const isMember = Boolean(
       membership && (membership.expires_at === null || membership.expires_at > now)
     );
@@ -38,6 +43,7 @@ export async function GET(req: NextRequest) {
       credits,
       inviteCode: user?.invite_code ?? null,
       inviteCount: user?.invite_count ?? 0,
+      previewUsed: Boolean(previewRow),
     });
   } catch (err) {
     const msg = err instanceof Error ? err.message : "获取用户信息失败";

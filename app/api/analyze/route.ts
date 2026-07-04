@@ -4,6 +4,7 @@ import { assessRisk } from "@/lib/scoring/risk";
 import { getDb } from "@/lib/db/d1";
 import { getSessionUser } from "@/lib/auth/session";
 import type { AnalysisResult } from "@/lib/ai/schema";
+import type { RiskAssessment } from "@/lib/scoring/risk";
 
 export const runtime = "edge";
 export const dynamic = "force-dynamic";
@@ -44,6 +45,16 @@ function buildPreview(full: AnalysisResult): AnalysisResult {
   };
 }
 
+function hashText(text: string): string {
+  let hash = 0;
+  for (let i = 0; i < text.length; i++) {
+    const char = text.charCodeAt(i);
+    hash = (hash << 5) - hash + char;
+    hash = hash & hash;
+  }
+  return hash.toString(16);
+}
+
 export async function POST(req: NextRequest) {
   try {
     const body = (await req.json().catch(() => null)) as { text?: string; mode?: string } | null;
@@ -71,46 +82,99 @@ export async function POST(req: NextRequest) {
     }
 
     const user = await getSessionUser(req);
-    const db = getDb();
-
-    let isPreview = true;
-    let creditsAfter = 0;
-
-    if (user) {
-      const membership = await db
-        .prepare("SELECT id, credits FROM memberships WHERE user_id = ? AND active = 1")
-        .bind(user.id)
-        .first<{ id: number; credits: number }>();
-
-      if (membership && membership.credits > 0) {
-        await db
-          .prepare("UPDATE memberships SET credits = credits - 1, updated_at = ? WHERE id = ?")
-          .bind(Date.now(), membership.id)
-          .run();
-        creditsAfter = membership.credits - 1;
-        isPreview = false;
-      }
+    if (!user) {
+      return NextResponse.json(
+        { error: "请先登录后再分析", code: "UNAUTHORIZED" },
+        { status: 401 }
+      );
     }
 
-    const analyzeMode = mode === "deep" ? "deep" : "basic";
+    const db = getDb();
+    const now = Date.now();
+    const textHash = hashText(text.trim());
 
+    const membership = await db
+      .prepare("SELECT id, credits FROM memberships WHERE user_id = ? AND active = 1")
+      .bind(user.id)
+      .first<{ id: number; credits: number }>();
+
+    // 有次数：走完整版
+    if (membership && membership.credits > 0) {
+      await db
+        .prepare("UPDATE memberships SET credits = credits - 1, updated_at = ? WHERE id = ?")
+        .bind(now, membership.id)
+        .run();
+
+      const analyzeMode = mode === "deep" ? "deep" : "basic";
+      const startedAt = Date.now();
+      const result = await analyzeContract(text, { mode: analyzeMode });
+      const elapsedMs = Date.now() - startedAt;
+      const risk = assessRisk(result);
+
+      return NextResponse.json({
+        result,
+        risk,
+        credits: membership.credits - 1,
+        preview: false,
+        meta: {
+          mode: analyzeMode,
+          elapsedMs,
+          clauseCount: result.clauses.length,
+        },
+      });
+    }
+
+    // 无次数：检查是否已有免费预览记录
+    const existingPreview = await db
+      .prepare("SELECT result, risk, meta FROM user_previews WHERE user_id = ?")
+      .bind(user.id)
+      .first<{ result: string; risk: string; meta: string }>();
+
+    if (existingPreview) {
+      return NextResponse.json(
+        {
+          error: "免费预览次数已用完，请购买套餐查看完整报告",
+          code: "PREVIEW_USED",
+          preview: true,
+        },
+        { status: 403 }
+      );
+    }
+
+    // 首次免费预览
+    const analyzeMode = mode === "deep" ? "deep" : "basic";
     const startedAt = Date.now();
     const fullResult = await analyzeContract(text, { mode: analyzeMode });
     const elapsedMs = Date.now() - startedAt;
+    const previewResult = buildPreview(fullResult);
+    const risk = assessRisk(previewResult);
 
-    const result = isPreview ? buildPreview(fullResult) : fullResult;
-    const risk = assessRisk(result);
+    const meta = {
+      mode: analyzeMode,
+      elapsedMs,
+      clauseCount: fullResult.clauses.length,
+    };
+
+    await db
+      .prepare(
+        "INSERT OR REPLACE INTO user_previews (user_id, result, risk, meta, text_hash, created_at) VALUES (?, ?, ?, ?, ?, ?)"
+      )
+      .bind(
+        user.id,
+        JSON.stringify(previewResult),
+        JSON.stringify(risk),
+        JSON.stringify(meta),
+        textHash,
+        now
+      )
+      .run();
 
     return NextResponse.json({
-      result,
+      result: previewResult,
       risk,
-      credits: creditsAfter,
-      preview: isPreview,
-      meta: {
-        mode: analyzeMode,
-        elapsedMs,
-        clauseCount: fullResult.clauses.length,
-      },
+      credits: 0,
+      preview: true,
+      meta,
     });
   } catch (err) {
     const msg = err instanceof Error ? err.message : "分析失败";

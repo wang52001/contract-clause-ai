@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { create } from "zustand";
 import type { AnalysisResult } from "@/lib/ai/schema";
@@ -13,6 +13,12 @@ interface AnalysisState {
   preview: boolean;
   meta: { mode: string; elapsedMs: number; clauseCount: number } | null;
   setText: (t: string) => void;
+  setResult: (
+    result: AnalysisResult,
+    risk: RiskAssessment,
+    preview: boolean,
+    meta: { mode: string; elapsedMs: number; clauseCount: number }
+  ) => void;
   analyze: (mode?: "basic" | "deep") => Promise<void>;
   reset: () => void;
 }
@@ -26,6 +32,8 @@ export const useAnalysisStore = create<AnalysisState>((set, get) => ({
   preview: false,
   meta: null,
   setText: (t) => set({ text: t }),
+  setResult: (result, risk, preview, meta) =>
+    set({ result, risk, preview, meta }),
   analyze: async (mode = "basic") => {
     const text = get().text.trim();
     if (text.length < 80) {
