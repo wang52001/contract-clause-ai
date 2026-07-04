@@ -70,7 +70,7 @@ export default function PricingPage() {
       <div className="mb-8 text-center">
         <h1 className="text-2xl font-bold">选择分析次数套餐</h1>
         <p className="mt-2 text-sm text-muted-foreground">
-          登录后购买，支持跨设备同步。新用户注册即送 3 份免费分析次数。
+          登录后购买，支持跨设备同步。新用户注册即送 1 份免费分析次数。
         </p>
         {loaded && user && (
           <div className="mt-3 inline-flex items-center gap-2 rounded-full bg-primary/10 px-3 py-1 text-sm font-medium text-primary">
