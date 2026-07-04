@@ -1,6 +1,5 @@
-"use client";
+﻿"use client";
 
-import Link from "next/link";
 import { RiskScore } from "@/components/analyze/RiskScore";
 import { ClauseList } from "@/components/analyze/ClauseList";
 import { MissingAlerts } from "@/components/analyze/MissingAlerts";
@@ -8,8 +7,6 @@ import { ReportExport } from "@/components/report/ReportExport";
 import { ShareButton } from "@/components/report/ShareButton";
 import type { AnalysisResult } from "@/lib/ai/schema";
 import type { RiskAssessment } from "@/lib/scoring/risk";
-
-const FREE_CLAUSE_LIMIT = 3;
 
 interface ReportViewProps {
   result: AnalysisResult;
@@ -43,13 +40,6 @@ export function ReportView({
           </div>
         )}
       </div>
-
-      {!isMember && (
-        <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-700 print:hidden">
-          免费版仅展示前 {FREE_CLAUSE_LIMIT} 类条款详情，解锁全部 8 类 + 修改建议 + 谈判话术请
-          <Link href="/pricing" className="font-medium underline"> 成为会员</Link>。
-        </div>
-      )}
 
       <ClauseList result={result} isMember={isMember} />
 

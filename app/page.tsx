@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Loader2, ScanText, ShieldCheck, Sparkles, RotateCcw, AlertCircle } from "lucide-react";
+import { Loader2, ScanText, ShieldCheck, Sparkles, RotateCcw, AlertCircle, Lock } from "lucide-react";
 import { useAnalysisStore } from "@/lib/store";
 import { useMember } from "@/lib/hooks/useMember";
 import { FileDropzone } from "@/components/upload/FileDropzone";
@@ -17,6 +17,7 @@ export default function Home() {
   const error = useAnalysisStore((s) => s.error);
   const result = useAnalysisStore((s) => s.result);
   const risk = useAnalysisStore((s) => s.risk);
+  const preview = useAnalysisStore((s) => s.preview);
   const meta = useAnalysisStore((s) => s.meta);
   const analyze = useAnalysisStore((s) => s.analyze);
   const reset = useAnalysisStore((s) => s.reset);
@@ -24,15 +25,6 @@ export default function Home() {
   const [loginOpen, setLoginOpen] = useState(false);
 
   const hasCredits = credits > 0;
-
-  const handleAnalyze = async () => {
-    if (!user) {
-      setLoginOpen(true);
-      return;
-    }
-    if (!hasCredits) return;
-    await analyze("basic");
-  };
 
   if (result && risk) {
     return (
@@ -45,37 +37,37 @@ export default function Home() {
                 剩余 {credits} 份
               </span>
             )}
-            <Button
-              onClick={user ? reset : () => setLoginOpen(true)}
-              variant="ghost"
-              size="sm"
-              disabled={user ? !hasCredits : false}
-            >
+            <Button onClick={reset} variant="ghost" size="sm">
               <RotateCcw className="h-4 w-4" />
               重新审查
             </Button>
           </div>
         </div>
 
-        {!user && (
-          <div className="mb-4 rounded-md border border-amber-200 bg-amber-50 p-3 text-sm text-amber-700">
-            请先登录后再使用完整功能。
-            <button onClick={() => setLoginOpen(true)} className="font-semibold underline">
-              去登录
-            </button>
+        {preview && (
+          <div className="mb-4 rounded-md border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
+            <div className="mb-1 flex items-center gap-2 font-semibold">
+              <Lock className="h-4 w-4" />
+              当前为免费预览版
+            </div>
+            <p className="mb-2">
+              仅展示前 {result.clauses.length} 条条款详情。完整版包含全部 {meta?.clauseCount ?? 8} 类条款、修改建议、谈判话术、法律依据与缺失保护提示。
+            </p>
+            <div className="flex gap-2">
+              {!user ? (
+                <Button size="sm" onClick={() => setLoginOpen(true)}>
+                  登录后查看完整版
+                </Button>
+              ) : (
+                <Link href="/pricing">
+                  <Button size="sm">购买套餐</Button>
+                </Link>
+              )}
+            </div>
           </div>
         )}
 
-        {!hasCredits && user && (
-          <div className="mb-4 rounded-md border border-amber-200 bg-amber-50 p-3 text-sm text-amber-700">
-            次数已用完，
-            <Link href="/pricing" className="font-semibold underline">
-              去购买套餐
-            </Link>
-          </div>
-        )}
-
-        <ReportView result={result} risk={risk} isMember={hasCredits} meta={meta} />
+        <ReportView result={result} risk={risk} isMember={!preview} meta={meta} />
         <LoginDialog
           open={loginOpen}
           onClose={() => setLoginOpen(false)}
@@ -142,16 +134,11 @@ export default function Home() {
           <div className="flex items-center gap-2 rounded-md border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive">
             <AlertCircle className="h-4 w-4 shrink-0" />
             <span className="flex-1">{error}</span>
-            {error.includes("次数已用完") && (
-              <Link href="/pricing">
-                <Button size="sm" variant="outline">去购买</Button>
-              </Link>
-            )}
           </div>
         )}
 
         <Button
-          onClick={handleAnalyze}
+          onClick={() => analyze("basic")}
           disabled={loading || text.trim().length < 80}
           className="w-full"
           size="lg"
@@ -161,20 +148,10 @@ export default function Home() {
               <Loader2 className="h-4 w-4 animate-spin" />
               AI 正在审查…
             </>
-          ) : !user && loaded ? (
-            <>
-              <ScanText className="h-4 w-4" />
-              登录后开始审查
-            </>
-          ) : !hasCredits && loaded ? (
-            <>
-              <ScanText className="h-4 w-4" />
-              次数已用完
-            </>
           ) : (
             <>
               <ScanText className="h-4 w-4" />
-              开始审查
+              {!user && loaded ? "免费预览" : !hasCredits && loaded && user ? "免费预览" : "开始审查"}
             </>
           )}
         </Button>
@@ -182,11 +159,7 @@ export default function Home() {
         <p className="text-center text-xs text-muted-foreground">
           {text.trim().length < 80
             ? `还需输入至少 ${80 - text.trim().length} 个字符`
-            : !user && loaded
-            ? "登录后即可使用完整功能"
-            : !hasCredits && loaded
-            ? "次数不足，请购买套餐"
-            : "点击审查即同意本工具分析结果仅供参考"}
+            : "登录并购买套餐后可查看完整 8 类条款详情、修改建议、谈判话术与法律依据"}
         </p>
       </div>
 

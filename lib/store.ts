@@ -10,6 +10,7 @@ interface AnalysisState {
   error: string | null;
   result: AnalysisResult | null;
   risk: RiskAssessment | null;
+  preview: boolean;
   meta: { mode: string; elapsedMs: number; clauseCount: number } | null;
   setText: (t: string) => void;
   analyze: (mode?: "basic" | "deep") => Promise<void>;
@@ -22,6 +23,7 @@ export const useAnalysisStore = create<AnalysisState>((set, get) => ({
   error: null,
   result: null,
   risk: null,
+  preview: false,
   meta: null,
   setText: (t) => set({ text: t }),
   analyze: async (mode = "basic") => {
@@ -37,11 +39,18 @@ export const useAnalysisStore = create<AnalysisState>((set, get) => ({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ text, mode }),
       });
-      const data = (await res.json()) as { error?: string; result?: AnalysisResult; risk?: RiskAssessment; meta?: AnalysisState["meta"] };
+      const data = (await res.json()) as {
+        error?: string;
+        result?: AnalysisResult;
+        risk?: RiskAssessment;
+        preview?: boolean;
+        meta?: AnalysisState["meta"];
+      };
       if (!res.ok) throw new Error(data?.error ?? "分析失败");
       set({
         result: data.result,
         risk: data.risk,
+        preview: data.preview ?? false,
         meta: data.meta,
         loading: false,
       });
@@ -53,5 +62,5 @@ export const useAnalysisStore = create<AnalysisState>((set, get) => ({
     }
   },
   reset: () =>
-    set({ text: "", result: null, risk: null, error: null, loading: false, meta: null }),
+    set({ text: "", result: null, risk: null, error: null, loading: false, preview: false, meta: null }),
 }));
