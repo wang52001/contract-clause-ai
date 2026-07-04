@@ -1,5 +1,6 @@
 ﻿"use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { Loader2, ScanText, ShieldCheck, Sparkles, RotateCcw, AlertCircle } from "lucide-react";
 import { useAnalysisStore } from "@/lib/store";
@@ -8,6 +9,7 @@ import { FileDropzone } from "@/components/upload/FileDropzone";
 import { TextPaste } from "@/components/upload/TextPaste";
 import { Button } from "@/components/ui/button";
 import { ReportView } from "@/components/report/ReportView";
+import { LoginDialog } from "@/components/auth/LoginDialog";
 
 export default function Home() {
   const text = useAnalysisStore((s) => s.text);
@@ -19,8 +21,18 @@ export default function Home() {
   const analyze = useAnalysisStore((s) => s.analyze);
   const reset = useAnalysisStore((s) => s.reset);
   const { user, loaded, credits } = useMember();
+  const [loginOpen, setLoginOpen] = useState(false);
 
   const hasCredits = credits > 0;
+
+  const handleAnalyze = async () => {
+    if (!user) {
+      setLoginOpen(true);
+      return;
+    }
+    if (!hasCredits) return;
+    await analyze("basic");
+  };
 
   if (result && risk) {
     return (
@@ -33,14 +45,28 @@ export default function Home() {
                 剩余 {credits} 份
               </span>
             )}
-            <Button onClick={reset} variant="ghost" size="sm" disabled={!hasCredits}>
+            <Button
+              onClick={user ? reset : () => setLoginOpen(true)}
+              variant="ghost"
+              size="sm"
+              disabled={user ? !hasCredits : false}
+            >
               <RotateCcw className="h-4 w-4" />
               重新审查
             </Button>
           </div>
         </div>
 
-        {!hasCredits && (
+        {!user && (
+          <div className="mb-4 rounded-md border border-amber-200 bg-amber-50 p-3 text-sm text-amber-700">
+            请先登录后再使用完整功能。
+            <button onClick={() => setLoginOpen(true)} className="font-semibold underline">
+              去登录
+            </button>
+          </div>
+        )}
+
+        {!hasCredits && user && (
           <div className="mb-4 rounded-md border border-amber-200 bg-amber-50 p-3 text-sm text-amber-700">
             次数已用完，
             <Link href="/pricing" className="font-semibold underline">
@@ -50,6 +76,11 @@ export default function Home() {
         )}
 
         <ReportView result={result} risk={risk} isMember={hasCredits} meta={meta} />
+        <LoginDialog
+          open={loginOpen}
+          onClose={() => setLoginOpen(false)}
+          onSuccess={() => window.location.reload()}
+        />
       </div>
     );
   }
@@ -120,8 +151,8 @@ export default function Home() {
         )}
 
         <Button
-          onClick={() => analyze("basic")}
-          disabled={loading || text.trim().length < 80 || !hasCredits}
+          onClick={handleAnalyze}
+          disabled={loading || text.trim().length < 80}
           className="w-full"
           size="lg"
         >
@@ -130,7 +161,12 @@ export default function Home() {
               <Loader2 className="h-4 w-4 animate-spin" />
               AI 正在审查…
             </>
-          ) : !hasCredits && loaded && user ? (
+          ) : !user && loaded ? (
+            <>
+              <ScanText className="h-4 w-4" />
+              登录后开始审查
+            </>
+          ) : !hasCredits && loaded ? (
             <>
               <ScanText className="h-4 w-4" />
               次数已用完
@@ -146,11 +182,19 @@ export default function Home() {
         <p className="text-center text-xs text-muted-foreground">
           {text.trim().length < 80
             ? `还需输入至少 ${80 - text.trim().length} 个字符`
-            : !hasCredits && loaded && user
+            : !user && loaded
+            ? "登录后即可使用完整功能"
+            : !hasCredits && loaded
             ? "次数不足，请购买套餐"
             : "点击审查即同意本工具分析结果仅供参考"}
         </p>
       </div>
+
+      <LoginDialog
+        open={loginOpen}
+        onClose={() => setLoginOpen(false)}
+        onSuccess={() => window.location.reload()}
+      />
     </div>
   );
 }
