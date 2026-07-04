@@ -79,7 +79,16 @@ export function clearSessionCookie(): string {
   return `${COOKIE_NAME}=; Path=/; Max-Age=0; HttpOnly; Secure; SameSite=Lax`;
 }
 
-export async function createUserIfNotExists(email: string): Promise<number> {
+function generateInviteCode(): string {
+  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+  let code = "";
+  for (let i = 0; i < 6; i++) {
+    code += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return code;
+}
+
+export async function createUserIfNotExists(email: string, inviterCode?: string): Promise<number> {
   const db = getDb();
   const normalized = email.trim().toLowerCase();
   const now = Date.now();
@@ -91,19 +100,59 @@ export async function createUserIfNotExists(email: string): Promise<number> {
 
   if (existing) return existing.id;
 
+  const inviteCode = generateInviteCode();
+
   const result = await db
-    .prepare("INSERT INTO users (email, created_at, updated_at) VALUES (?, ?, ?)")
-    .bind(normalized, now, now)
+    .prepare("INSERT INTO users (email, invite_code, created_at, updated_at) VALUES (?, ?, ?, ?)")
+    .bind(normalized, inviteCode, now, now)
     .run();
 
   const userId = result.meta.last_row_id as number;
 
   await db
     .prepare(
-      "INSERT OR IGNORE INTO memberships (user_id, active, starts_at, expires_at, created_at, updated_at, credits) VALUES (?, 1, ?, NULL, ?, ?, 1)"
+      "INSERT OR IGNORE INTO memberships (user_id, active, starts_at, expires_at, created_at, updated_at, credits) VALUES (?, 1, ?, NULL, ?, ?, 0)"
     )
     .bind(userId, now, now, now)
     .run();
+
+  if (inviterCode) {
+    const inviter = await db
+      .prepare("SELECT id FROM users WHERE invite_code = ?")
+      .bind(inviterCode.trim().toUpperCase())
+      .first<{ id: number }>();
+
+    if (inviter && inviter.id !== userId) {
+      await db.prepare("UPDATE users SET invited_by = ? WHERE id = ?").bind(inviter.id, userId).run();
+      await db.prepare("UPDATE users SET invite_count = invite_count + 1 WHERE id = ?").bind(inviter.id).run();
+
+      const updated = await db
+        .prepare("SELECT invite_count FROM users WHERE id = ?")
+        .bind(inviter.id)
+        .first<{ invite_count: number }>();
+
+      if (updated && updated.invite_count > 0 && updated.invite_count % 3 === 0) {
+        const membership = await db
+          .prepare("SELECT id FROM memberships WHERE user_id = ? AND active = 1")
+          .bind(inviter.id)
+          .first<{ id: number }>();
+
+        if (membership) {
+          await db
+            .prepare("UPDATE memberships SET credits = credits + 1, updated_at = ? WHERE id = ?")
+            .bind(now, membership.id)
+            .run();
+        } else {
+          await db
+            .prepare(
+              "INSERT OR IGNORE INTO memberships (user_id, active, starts_at, expires_at, created_at, updated_at, credits) VALUES (?, 1, ?, NULL, ?, ?, 1)"
+            )
+            .bind(inviter.id, now, now, now)
+            .run();
+        }
+      }
+    }
+  }
 
   return userId;
 }

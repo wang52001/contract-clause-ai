@@ -7,7 +7,7 @@ export const dynamic = "force-dynamic";
 
 export async function POST(req: NextRequest) {
   try {
-    const body = (await req.json().catch(() => null)) as { email?: string; code?: string } | null;
+    const body = (await req.json().catch(() => null)) as { email?: string; code?: string; inviteCode?: string } | null;
     const email = typeof body?.email === "string" ? body.email.trim() : "";
     const code = typeof body?.code === "string" ? body.code.trim() : "";
 
@@ -20,7 +20,8 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: verifyResult.message }, { status: 400 });
     }
 
-    const userId = await createUserIfNotExists(email);
+    const inviteCode = typeof body?.inviteCode === "string" ? body.inviteCode.trim() : undefined;
+    const userId = await createUserIfNotExists(email, inviteCode);
     const token = await createSession(userId);
 
     const response = NextResponse.json({

@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState, useCallback, useEffect } from "react";
 import { X, Loader2, Mail, KeyRound } from "lucide-react";
@@ -14,6 +14,7 @@ export function LoginDialog({ open, onClose, onSuccess }: LoginDialogProps) {
   const [step, setStep] = useState<"email" | "code">("email");
   const [email, setEmail] = useState("");
   const [code, setCode] = useState("");
+  const [inviteCode, setInviteCode] = useState("");
   const [loading, setLoading] = useState(false);
   const [countdown, setCountdown] = useState(0);
   const [error, setError] = useState<string | null>(null);
@@ -24,6 +25,7 @@ export function LoginDialog({ open, onClose, onSuccess }: LoginDialogProps) {
       setStep("email");
       setEmail("");
       setCode("");
+      setInviteCode("");
       setError(null);
       setMessage(null);
       setCountdown(0);
@@ -73,10 +75,12 @@ export function LoginDialog({ open, onClose, onSuccess }: LoginDialogProps) {
     }
     setLoading(true);
     try {
+      const body: Record<string, string> = { email, code };
+      if (inviteCode.trim()) body.inviteCode = inviteCode.trim().toUpperCase();
       const res = await fetch("/api/auth/otp/verify", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, code }),
+        body: JSON.stringify(body),
         credentials: "same-origin",
       });
       const data = (await res.json()) as { error?: string };
@@ -131,6 +135,17 @@ export function LoginDialog({ open, onClose, onSuccess }: LoginDialogProps) {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="your@email.com"
+                  className="flex h-10 w-full rounded-md border border-input bg-background pl-9 pr-3 py-2 text-sm"
+                  onKeyDown={(e) => e.key === "Enter" && sendCode()}
+                />
+              </div>
+              <div className="relative">
+                <KeyRound className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <input
+                  type="text"
+                  value={inviteCode}
+                  onChange={(e) => setInviteCode(e.target.value.toUpperCase())}
+                  placeholder="邀请码（选填）"
                   className="flex h-10 w-full rounded-md border border-input bg-background pl-9 pr-3 py-2 text-sm"
                   onKeyDown={(e) => e.key === "Enter" && sendCode()}
                 />

@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import Link from "next/link";
 import { Loader2, ScanText, ShieldCheck, Sparkles, RotateCcw, AlertCircle } from "lucide-react";
@@ -42,7 +42,7 @@ export default function Home() {
 
         {!hasCredits && (
           <div className="mb-4 rounded-md border border-amber-200 bg-amber-50 p-3 text-sm text-amber-700">
-            分析次数已用完，
+            次数已用完，
             <Link href="/pricing" className="font-semibold underline">
               去购买套餐
             </Link>
@@ -147,7 +147,7 @@ export default function Home() {
           {text.trim().length < 80
             ? `还需输入至少 ${80 - text.trim().length} 个字符`
             : !hasCredits && loaded && user
-            ? "分析次数不足，请购买套餐"
+            ? "次数不足，请购买套餐"
             : "点击审查即同意本工具分析结果仅供参考"}
         </p>
       </div>

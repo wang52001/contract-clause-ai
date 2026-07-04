@@ -1,7 +1,7 @@
-﻿"use client";
+"use client";
 
 import { useState } from "react";
-import { Check, Sparkles, Lock, QrCode, LogIn, Loader2, Gift } from "lucide-react";
+import { Sparkles, QrCode, LogIn, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useMember } from "@/lib/hooks/useMember";
 import { LoginDialog } from "@/components/auth/LoginDialog";
@@ -23,10 +23,9 @@ const FEATURES = [
 ];
 
 export default function PricingPage() {
-  const { credits, user, loaded, activate, createOrder } = useMember();
+  const { credits, user, loaded, createOrder } = useMember();
   const [loginOpen, setLoginOpen] = useState(false);
-  const [code, setCode] = useState("");
-  const [codeError, setCodeError] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const [selectedPlan, setSelectedPlan] = useState<(typeof PLANS)[0] | null>(null);
   const [order, setOrder] = useState<{
     id: number;
@@ -37,17 +36,10 @@ export default function PricingPage() {
   } | null>(null);
   const [creating, setCreating] = useState(false);
 
-  const handleActivate = async () => {
-    setCodeError(null);
-    const ok = await activate(code);
-    if (!ok) {
-      setCodeError("邀请码无效，请检查后重试");
-    }
-  };
-
   const handleCreateOrder = async (paymentMethod: "wxpay" | "alipay") => {
     if (!selectedPlan) return;
     setCreating(true);
+    setError(null);
     try {
       const newOrder = await createOrder(paymentMethod, selectedPlan.quantity, selectedPlan.amount, user?.email);
       setOrder(newOrder as {
@@ -59,7 +51,7 @@ export default function PricingPage() {
       });
     } catch (err) {
       const msg = err instanceof Error ? err.message : "创建订单失败";
-      setCodeError(msg);
+      setError(msg);
     } finally {
       setCreating(false);
     }
@@ -68,9 +60,9 @@ export default function PricingPage() {
   return (
     <div className="mx-auto max-w-4xl px-4 py-10">
       <div className="mb-8 text-center">
-        <h1 className="text-2xl font-bold">选择分析次数套餐</h1>
+        <h1 className="text-2xl font-bold">选择套餐</h1>
         <p className="mt-2 text-sm text-muted-foreground">
-          登录后购买，支持跨设备同步。新用户注册即送 1 份免费分析次数。
+          购买后即可使用完整功能。邀请 3 名好友注册可获赠 1 份。
         </p>
         {loaded && user && (
           <div className="mt-3 inline-flex items-center gap-2 rounded-full bg-primary/10 px-3 py-1 text-sm font-medium text-primary">
@@ -112,7 +104,7 @@ export default function PricingPage() {
       <div className="mt-8 grid gap-4 sm:grid-cols-2">
         <div className="rounded-lg border bg-card p-6">
           <h2 className="text-lg font-semibold">套餐权益</h2>
-          <p className="mt-1 text-sm text-muted-foreground">每次分析消耗 1 份</p>
+          <p className="mt-1 text-sm text-muted-foreground">每份可完整审查一份合同</p>
           <ul className="mt-4 space-y-2 text-sm">
             {FEATURES.map((f) => (
               <li key={f} className="flex items-center gap-2">
@@ -130,6 +122,8 @@ export default function PricingPage() {
               ? `已选 ${selectedPlan.label}，共 ${selectedPlan.price}`
               : "请先选择上方套餐"}
           </p>
+
+          {error && <p className="mt-2 text-xs text-destructive">{error}</p>}
 
           {!loaded ? (
             <div className="mt-6 flex justify-center">
@@ -211,30 +205,6 @@ export default function PricingPage() {
                   {creating ? <Loader2 className="h-4 w-4 animate-spin" /> : "支付宝"}
                 </Button>
               </div>
-
-              <div className="relative py-1">
-                <div className="absolute inset-0 flex items-center">
-                  <div className="w-full border-t" />
-                </div>
-                <div className="relative flex justify-center">
-                  <span className="bg-card px-2 text-xs text-muted-foreground">或使用邀请码</span>
-                </div>
-              </div>
-
-              <input
-                value={code}
-                onChange={(e) => setCode(e.target.value)}
-                placeholder="输入邀请码"
-                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-              />
-              {codeError && <p className="text-xs text-destructive">{codeError}</p>}
-              <Button onClick={handleActivate} className="w-full" size="sm">
-                <Gift className="mr-1 h-4 w-4" />
-                激活邀请码
-              </Button>
-              {/*
-                内测邀请码已结束
-              */}
             </div>
           )}
         </div>
@@ -242,7 +212,7 @@ export default function PricingPage() {
 
       <div className="mt-8 rounded-lg border bg-muted/30 p-4 text-xs text-muted-foreground">
         <p className="mb-1 font-medium text-foreground">说明</p>
-        每份分析次数可审查一份合同。付款备注订单号，管理员确认后自动到账。分析次数用完可继续购买。
+        每份可完整审查一份合同。付款备注订单号，管理员确认后自动到账。在账户页可复制个人邀请码，邀请 3 名好友注册成功后可获赠 1 份。
         本工具不替代律师，重大合同请咨询执业律师。
       </div>
 

@@ -14,6 +14,9 @@ import {
   CreditCard,
   Clock,
   CheckCircle,
+  Copy,
+  Check,
+  Users,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useMember } from "@/lib/hooks/useMember";
@@ -37,8 +40,9 @@ interface Message {
 }
 
 export default function AccountPage() {
-  const { user, loaded, credits } = useMember();
+  const { user, loaded, credits, inviteCode, inviteCount } = useMember();
   const router = useRouter();
+  const [copied, setCopied] = useState(false);
 
   const [orders, setOrders] = useState<Order[]>([]);
   const [loadingOrders, setLoadingOrders] = useState(false);
@@ -184,6 +188,34 @@ export default function AccountPage() {
             )}
           </div>
         </div>
+
+        {inviteCode && (
+          <div className="mt-4 rounded-md border bg-muted/30 p-3">
+            <div className="mb-2 flex items-center gap-2 text-sm font-medium">
+              <Users className="h-4 w-4" />
+              邀请好友
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="flex-1 rounded-md bg-background px-3 py-2 font-mono text-sm">
+                {inviteCode}
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  navigator.clipboard.writeText(inviteCode);
+                  setCopied(true);
+                  setTimeout(() => setCopied(false), 2000);
+                }}
+              >
+                {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+              </Button>
+            </div>
+            <p className="mt-2 text-xs text-muted-foreground">
+              好友注册时填写你的邀请码，满 3 人可获赠 1 份（已邀请 {inviteCount}/3 人）
+            </p>
+          </div>
+        )}
       </div>
 
       {error && (
