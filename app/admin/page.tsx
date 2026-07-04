@@ -128,10 +128,29 @@ export default function AdminPage() {
     }
   }, [selectedOrder, fetchMessages]);
 
-  const handleLogin = () => {
-    sessionStorage.setItem("fcg_admin_secret", secret);
-    setStoredSecret(secret);
-    setSecret("");
+  const handleLogin = async () => {
+    setError(null);
+    if (!secret.trim()) {
+      setError("请输入管理员密钥");
+      return;
+    }
+    setLoading(true);
+    try {
+      const res = await fetch("/api/admin/orders", {
+        headers: { Authorization: `Bearer ${secret.trim()}` },
+      });
+      if (!res.ok) {
+        setError("管理员密钥错误");
+        return;
+      }
+      sessionStorage.setItem("fcg_admin_secret", secret.trim());
+      setStoredSecret(secret.trim());
+      setSecret("");
+    } catch {
+      setError("网络错误");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleLogout = () => {
@@ -255,8 +274,8 @@ export default function AdminPage() {
             className="mb-3 flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
             onKeyDown={(e) => e.key === "Enter" && handleLogin()}
           />
-          <Button onClick={handleLogin} className="w-full">
-            进入后台
+          <Button onClick={handleLogin} disabled={loading} className="w-full">
+            {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : "进入后台"}
           </Button>
         </div>
       </div>
