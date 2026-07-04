@@ -81,7 +81,7 @@ export default function AdminPage() {
   const fetchMessages = useCallback(async (orderId: number) => {
     if (!storedSecret) return;
     try {
-      const res = await fetch(`/api/orders/${orderId}/messages`, {
+      const res = await fetch(`/api/admin/orders/${orderId}/messages`, {
         headers: { Authorization: `Bearer ${storedSecret}` },
       });
       const data = (await res.json()) as { error?: string; messages?: Message[] };

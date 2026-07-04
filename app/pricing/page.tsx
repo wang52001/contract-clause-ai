@@ -153,7 +153,7 @@ export default function PricingPage() {
                   套餐：{order.quantity} 份 · 金额：¥{(order.amount / 100).toFixed(2)}
                   <br />
                   扫码付款时<span className="font-semibold">务必备注订单号</span>，付款后我会尽快确认。
-                */}
+                </p>
               </div>
 
               <div className="grid grid-cols-2 gap-3">
