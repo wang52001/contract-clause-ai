@@ -5,7 +5,7 @@ import type { RiskAssessment } from "@/lib/scoring/risk";
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Loader2, ScanText, ShieldCheck, Sparkles, RotateCcw, AlertCircle, Lock, History } from "lucide-react";
+import { Loader2, ScanText, ShieldCheck, Sparkles, AlertCircle, Lock, History } from "lucide-react";
 import { useAnalysisStore } from "@/lib/store";
 import { useMember } from "@/lib/hooks/useMember";
 import { FileDropzone } from "@/components/upload/FileDropzone";
@@ -70,17 +70,11 @@ export default function Home() {
       <div className="mx-auto max-w-3xl px-4 py-6">
         <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between print:hidden">
           <h1 className="text-xl font-bold">审查报告</h1>
-          <div className="flex items-center gap-3">
-            {loaded && user && (
-              <span className="text-sm text-muted-foreground">
-                剩余 {credits} 份
-              </span>
-            )}
-            <Button onClick={reset} variant="ghost" size="sm">
-              <RotateCcw className="h-4 w-4" />
-              重新审查
-            </Button>
-          </div>
+          {loaded && user && (
+            <span className="text-sm text-muted-foreground">
+              剩余 {credits} 份
+            </span>
+          )}
         </div>
 
         {preview && (
